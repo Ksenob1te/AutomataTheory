@@ -1,4 +1,4 @@
-import Turnstile_sm
+from task_1.smc import Turnstile_sm
 
 
 class Turnstile:

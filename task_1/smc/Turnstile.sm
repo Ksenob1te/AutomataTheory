@@ -1,0 +1,47 @@
+%class Resolver
+%package resolver
+
+%start MainMap::Locked
+
+// irc://имя_сервера:номер_порта/имя_канала?пароль
+
+%map MainMap
+%%
+
+Default {
+    next no_match {finish();}
+}
+
+irc_identify {
+    next [ ctxt.check_irc() ]                               server_name_iden    { process(); skip(6); }
+}
+
+server_name_iden {
+    next [ ctxt.get().is_letter() ]                         server_name_iden    { context(1); skip(); }
+    next [ ctxt.get().is_number() ]                         server_name_iden    { context(1); skip(); }
+    next [ ctxt.get() == ":" and ctxt.context() == 1]       port_iden           { process(); skip(); }
+}
+
+port_iden {
+    next [ ctxt.update_port() ]                             port_iden           { context(2); skip(); }
+    next [ ctxt.get() == "/" and ctxt.context() == 2]       channel_name_iden   { process(); skip(); }
+    next [ ctxt.get() == "?" and ctxt.context() == 2]       channel_name_iden   { process(); skip(); }
+}
+
+channel_name_iden {
+    next [ ctxt.get().is_letter() ]                         channel_name_iden   { context(3); skip(); }
+    next [ ctxt.get().is_number() ]                         channel_name_iden   { context(3); skip(); }
+    next [ ctxt.get() == "?" and ctxt.context() == 3]       channel_name_iden   { process(); skip(); }
+}
+
+Locked
+{
+    coin Unlocked { unlock(); }
+    passs nil { alarm(); }
+}
+Unlocked
+{
+    passs Locked { lock(); }
+    coin nil { thankyou(); }
+}
+%%
