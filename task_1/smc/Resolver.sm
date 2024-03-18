@@ -1,0 +1,40 @@
+%class Resolver
+%package resolver
+
+%start MainMap::Locked
+
+
+%map MainMap
+%%
+
+Default {
+    next no_match { finish(); }
+}
+
+irc_identify {
+    next [ ctxt.get(6).is_irc() ]                           server_name_iden    { process(); skip(6); }
+}
+
+server_name_iden {
+    next [ ctxt.get().is_alnum() ]                         server_name_iden    { context(1); skip(); }
+    next [ ctxt.get() == ":" and ctxt.context() == 1]      port_iden           { process(); skip(); }
+}
+
+port_iden {
+    next [ ctxt.update_port() ]                             port_iden           { context(2); skip(); }
+    next [ ctxt.get() == "/" and ctxt.context() == 2]       channel_name_iden   { process(); skip(); }
+}
+
+channel_name_iden {
+    next [ ctxt.get().is_alnum() ]                         channel_name_iden   { context(3); skip(); }
+    next [ ctxt.get() == "?"]                              password_iden       { process(); skip(); }
+}
+
+password_iden {
+    next [ ctxt.get().is_alnum() ]                         password_iden       { context(4); skip(); }
+    next [ ctxt.check_end() ]                              match               { finish(); }
+}
+
+match {}
+no_match {}
+%%
