@@ -29,7 +29,7 @@ class MainMap_Default(ResolverState):
         fsm.getState().Exit(fsm)
         fsm.clearState()
         try:
-            ctxt.finish()
+            ctxt.finish(False)
         finally:
             fsm.setState(MainMap.no_match)
             fsm.getState().Entry(fsm)
@@ -39,11 +39,10 @@ class MainMap_irc_identify(MainMap_Default):
 
     def next(self, fsm):
         ctxt = fsm.getOwner()
-        if  ctxt.check_irc()  :
+        if  ctxt.get(6).is_irc() and ctxt.validate()  :
             fsm.getState().Exit(fsm)
             fsm.clearState()
             try:
-                ctxt.process()
                 ctxt.skip(6)
             finally:
                 fsm.setState(MainMap.server_name_iden)
@@ -55,16 +54,7 @@ class MainMap_server_name_iden(MainMap_Default):
 
     def next(self, fsm):
         ctxt = fsm.getOwner()
-        if  ctxt.get().is_letter()  :
-            fsm.getState().Exit(fsm)
-            fsm.clearState()
-            try:
-                ctxt.context(1)
-                ctxt.skip()
-            finally:
-                fsm.setState(MainMap.server_name_iden)
-                fsm.getState().Entry(fsm)
-        elif  ctxt.get().is_number()  :
+        if  ctxt.get().is_alnum()  :
             fsm.getState().Exit(fsm)
             fsm.clearState()
             try:
@@ -77,10 +67,25 @@ class MainMap_server_name_iden(MainMap_Default):
             fsm.getState().Exit(fsm)
             fsm.clearState()
             try:
-                ctxt.process()
                 ctxt.skip()
             finally:
                 fsm.setState(MainMap.port_iden)
+                fsm.getState().Entry(fsm)
+        elif  ctxt.get() == "/" and ctxt.context() == 1 :
+            fsm.getState().Exit(fsm)
+            fsm.clearState()
+            try:
+                ctxt.skip()
+            finally:
+                fsm.setState(MainMap.channel_name_iden)
+                fsm.getState().Entry(fsm)
+        elif  ctxt.context() == 1  :
+            fsm.getState().Exit(fsm)
+            fsm.clearState()
+            try:
+                ctxt.finish()
+            finally:
+                fsm.setState(MainMap.match)
                 fsm.getState().Entry(fsm)
         else:
             MainMap_Default.next(self, fsm)
@@ -102,7 +107,6 @@ class MainMap_port_iden(MainMap_Default):
             fsm.getState().Exit(fsm)
             fsm.clearState()
             try:
-                ctxt.process()
                 ctxt.skip()
             finally:
                 fsm.setState(MainMap.channel_name_iden)
@@ -114,16 +118,7 @@ class MainMap_channel_name_iden(MainMap_Default):
 
     def next(self, fsm):
         ctxt = fsm.getOwner()
-        if  ctxt.get().is_letter()  :
-            fsm.getState().Exit(fsm)
-            fsm.clearState()
-            try:
-                ctxt.context(3)
-                ctxt.skip()
-            finally:
-                fsm.setState(MainMap.channel_name_iden)
-                fsm.getState().Entry(fsm)
-        elif  ctxt.get().is_number()  :
+        if  ctxt.get().is_alnum()  :
             fsm.getState().Exit(fsm)
             fsm.clearState()
             try:
@@ -136,41 +131,38 @@ class MainMap_channel_name_iden(MainMap_Default):
             fsm.getState().Exit(fsm)
             fsm.clearState()
             try:
-                ctxt.process()
                 ctxt.skip()
             finally:
                 fsm.setState(MainMap.password_iden)
                 fsm.getState().Entry(fsm)
         else:
-            MainMap_Default.next(self, fsm)
-        
-class MainMap_password_iden(MainMap_Default):
-
-    def next(self, fsm):
-        ctxt = fsm.getOwner()
-        if  ctxt.get().is_letter()  :
-            fsm.getState().Exit(fsm)
-            fsm.clearState()
-            try:
-                ctxt.context(4)
-                ctxt.skip()
-            finally:
-                fsm.setState(MainMap.password_iden)
-                fsm.getState().Entry(fsm)
-        elif  ctxt.get().is_number()  :
-            fsm.getState().Exit(fsm)
-            fsm.clearState()
-            try:
-                ctxt.context(4)
-                ctxt.skip()
-            finally:
-                fsm.setState(MainMap.password_iden)
-                fsm.getState().Entry(fsm)
-        elif  ctxt.check_end()  :
             fsm.getState().Exit(fsm)
             fsm.clearState()
             try:
                 ctxt.finish()
+            finally:
+                fsm.setState(MainMap.match)
+                fsm.getState().Entry(fsm)
+
+
+class MainMap_password_iden(MainMap_Default):
+
+    def next(self, fsm):
+        ctxt = fsm.getOwner()
+        if  ctxt.get().is_alnum()  :
+            fsm.getState().Exit(fsm)
+            fsm.clearState()
+            try:
+                ctxt.context(4)
+                ctxt.skip()
+            finally:
+                fsm.setState(MainMap.password_iden)
+                fsm.getState().Entry(fsm)
+        elif  ctxt.context() == 4  :
+            fsm.getState().Exit(fsm)
+            fsm.clearState()
+            try:
+                ctxt.finish(True)
             finally:
                 fsm.setState(MainMap.match)
                 fsm.getState().Entry(fsm)
@@ -197,7 +189,7 @@ class MainMap(object):
 class Resolver_sm(statemap.FSMContext):
 
     def __init__(self, owner):
-        statemap.FSMContext.__init__(self, MainMap.Locked)
+        statemap.FSMContext.__init__(self, MainMap.irc_identify)
         self._owner = owner
 
     def __getattr__(self, attrib):
