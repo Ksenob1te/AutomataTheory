@@ -25,6 +25,7 @@ server_name_iden {
 port_iden {
     next [ ctxt.update_port() ]                             port_iden           { context(2); skip(); }
     next [ ctxt.get() == "/" and ctxt.context() == 2]       channel_name_iden   { skip(); }
+    next [ ctxt.context() == 2 ]                            match               { finish(); }
 }
 
 channel_name_iden {
