@@ -83,7 +83,7 @@ class MainMap_server_name_iden(MainMap_Default):
             fsm.getState().Exit(fsm)
             fsm.clearState()
             try:
-                ctxt.finish()
+                ctxt.finish(True)
             finally:
                 fsm.setState(MainMap.match)
                 fsm.getState().Entry(fsm)
@@ -110,6 +110,14 @@ class MainMap_port_iden(MainMap_Default):
                 ctxt.skip()
             finally:
                 fsm.setState(MainMap.channel_name_iden)
+                fsm.getState().Entry(fsm)
+        elif  ctxt.context() == 2  :
+            fsm.getState().Exit(fsm)
+            fsm.clearState()
+            try:
+                ctxt.finish(True)
+            finally:
+                fsm.setState(MainMap.match)
                 fsm.getState().Entry(fsm)
         else:
             MainMap_Default.next(self, fsm)
@@ -139,7 +147,7 @@ class MainMap_channel_name_iden(MainMap_Default):
             fsm.getState().Exit(fsm)
             fsm.clearState()
             try:
-                ctxt.finish()
+                ctxt.finish(True)
             finally:
                 fsm.setState(MainMap.match)
                 fsm.getState().Entry(fsm)
