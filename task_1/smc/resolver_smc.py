@@ -53,7 +53,7 @@ class Resolver:
         while not self.finish_checker:
             self._fsm.next()
         if self.state:
-            print("IT IS CORRECT")
+            # print("IT IS CORRECT")
             # print(self.server_name)
             # if self.port:
             #     print(self.port)
@@ -61,7 +61,7 @@ class Resolver:
             # print(self.password)
             return 1
         else:
-            print("IT IS INCORRECT")
+            # print("IT IS INCORRECT")
             return 0
 
 
