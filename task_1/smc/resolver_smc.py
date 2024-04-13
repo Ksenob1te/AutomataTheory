@@ -1,4 +1,5 @@
 from task_1.smc import Resolver_sm
+from typing import Union
 
 
 class Element:
@@ -110,6 +111,20 @@ class Resolver:
         else:
             self.state = False
         self.finish_checker = True
+
+
+def resolve(input_str: str) -> Union[str, None]:
+    ts = Resolver(input_str)
+    if ts.run():
+        return ts.server_name
+    else:
+        return None
+
+
+if __name__ == "__main__":
+    ts = Resolver("irc://hello:13197/2Kly?STpvA")
+    ts.run()
+    print(ts.server_name)
 
 
 
