@@ -1,0 +1,145 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> main
+Rule 1     main -> IRC_PART TEXT_PART after_server
+Rule 2     after_server -> PORT_PART after_port
+Rule 3     after_server -> after_port
+Rule 4     after_port -> <empty>
+Rule 5     after_port -> SLASH after_slash
+Rule 6     after_slash -> <empty>
+Rule 7     after_slash -> TEXT_PART PASSWORD
+Rule 8     after_slash -> PASSWORD
+Rule 9     after_slash -> TEXT_PART
+
+Terminals, with rules where they appear
+
+IRC_PART             : 1
+PASSWORD             : 7 8
+PORT_PART            : 2
+SLASH                : 5
+TEXT_PART            : 1 7 9
+error                : 
+
+Nonterminals, with rules where they appear
+
+after_port           : 2 3
+after_server         : 1
+after_slash          : 5
+main                 : 0
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . main
+    (1) main -> . IRC_PART TEXT_PART after_server
+
+    IRC_PART        shift and go to state 2
+
+    main                           shift and go to state 1
+
+state 1
+
+    (0) S' -> main .
+
+
+
+state 2
+
+    (1) main -> IRC_PART . TEXT_PART after_server
+
+    TEXT_PART       shift and go to state 3
+
+
+state 3
+
+    (1) main -> IRC_PART TEXT_PART . after_server
+    (2) after_server -> . PORT_PART after_port
+    (3) after_server -> . after_port
+    (4) after_port -> .
+    (5) after_port -> . SLASH after_slash
+
+    PORT_PART       shift and go to state 5
+    $end            reduce using rule 4 (after_port -> .)
+    SLASH           shift and go to state 7
+
+    after_server                   shift and go to state 4
+    after_port                     shift and go to state 6
+
+state 4
+
+    (1) main -> IRC_PART TEXT_PART after_server .
+
+    $end            reduce using rule 1 (main -> IRC_PART TEXT_PART after_server .)
+
+
+state 5
+
+    (2) after_server -> PORT_PART . after_port
+    (4) after_port -> .
+    (5) after_port -> . SLASH after_slash
+
+    $end            reduce using rule 4 (after_port -> .)
+    SLASH           shift and go to state 7
+
+    after_port                     shift and go to state 8
+
+state 6
+
+    (3) after_server -> after_port .
+
+    $end            reduce using rule 3 (after_server -> after_port .)
+
+
+state 7
+
+    (5) after_port -> SLASH . after_slash
+    (6) after_slash -> .
+    (7) after_slash -> . TEXT_PART PASSWORD
+    (8) after_slash -> . PASSWORD
+    (9) after_slash -> . TEXT_PART
+
+    $end            reduce using rule 6 (after_slash -> .)
+    TEXT_PART       shift and go to state 10
+    PASSWORD        shift and go to state 11
+
+    after_slash                    shift and go to state 9
+
+state 8
+
+    (2) after_server -> PORT_PART after_port .
+
+    $end            reduce using rule 2 (after_server -> PORT_PART after_port .)
+
+
+state 9
+
+    (5) after_port -> SLASH after_slash .
+
+    $end            reduce using rule 5 (after_port -> SLASH after_slash .)
+
+
+state 10
+
+    (7) after_slash -> TEXT_PART . PASSWORD
+    (9) after_slash -> TEXT_PART .
+
+    PASSWORD        shift and go to state 12
+    $end            reduce using rule 9 (after_slash -> TEXT_PART .)
+
+
+state 11
+
+    (8) after_slash -> PASSWORD .
+
+    $end            reduce using rule 8 (after_slash -> PASSWORD .)
+
+
+state 12
+
+    (7) after_slash -> TEXT_PART PASSWORD .
+
+    $end            reduce using rule 7 (after_slash -> TEXT_PART PASSWORD .)
+

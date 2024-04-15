@@ -3,7 +3,7 @@ import string
 
 # irc://имя_сервера:номер_порта/имя_канала?пароль
 
-MAX_PER_PART: int = 80
+MAX_PER_PART: int = 800
 
 def get_string() -> str:
     is_good = True
