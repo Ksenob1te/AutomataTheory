@@ -1,5 +1,6 @@
 from task_1.smc import Resolver_sm
-from typing import Union
+from typing import Union, Tuple
+import time
 
 
 class Element:
@@ -49,7 +50,6 @@ class Resolver:
         self.current_state = 0
         self._fsm = Resolver_sm.Resolver_sm(self)
 
-
     def run(self):
         while not self.finish_checker:
             self._fsm.next()
@@ -65,7 +65,6 @@ class Resolver:
             # print("IT IS INCORRECT")
             return 0
 
-
     def validate(self):
         return len(self.check_string) <= 80
 
@@ -76,7 +75,6 @@ class Resolver:
         if self.current_id + amount <= len(self.check_string):
             return Element(self.check_string[self.current_id:(self.current_id + amount)])
         return Element()
-
 
     def context(self, set_context: int = None) -> int:
         if set_context is None:
@@ -104,7 +102,6 @@ class Resolver:
         self.port += int(element)
         return 1 <= self.port <= 65535
 
-
     def finish(self, success: bool = False):
         if success:
             self.state = True
@@ -113,12 +110,13 @@ class Resolver:
         self.finish_checker = True
 
 
-def resolve(input_str: str) -> Union[str, None]:
+def resolve(input_str: str) -> Tuple[Union[str, None], float]:
     ts = Resolver(input_str)
+    start_timer = time.time()
     if ts.run():
-        return ts.server_name
+        return ts.server_name, time.time() - start_timer
     else:
-        return None
+        return None, time.time() - start_timer
 
 
 if __name__ == "__main__":
