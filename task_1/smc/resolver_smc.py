@@ -1,4 +1,4 @@
-import Resolver_sm
+from task_1.smc import Resolver_sm
 from typing import Union, Tuple
 import time
 
