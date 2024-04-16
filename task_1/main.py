@@ -30,8 +30,9 @@ if __name__ == '__main__':
             server_dict[result] = server_dict.get(result, 0) + 1
         return bool(result), timer
 
-    for line in sys.stdin:
+    for line in open("input.txt"):
         line = line.replace("\n", "")
+        print(line)
         if "lex" in sys.argv:
             result, lex_timer = check(lexer.resolve, line)
             print(f"Lex parser: {result} in {lex_timer}")

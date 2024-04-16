@@ -26,5 +26,6 @@ def generate_random() -> Tuple[str, int]:
 
 
 if __name__ == "__main__":
+    file = open("input.txt", "w")
     for i in range(10000):
-        print(generate_random()[0])
+        file.write(generate_random()[0] + "\n")
