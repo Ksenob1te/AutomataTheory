@@ -35,6 +35,12 @@ def find_top_brackets(asts: List[AST]) -> List[int]:
 
 
 def bracket_pair_to_ast(asts: List[AST], brackets: List[int]) -> None:
+    """
+    Converts bracket pairs to ASTs.
+    :param asts: List of ASTs.
+    :param brackets: Tuple of (start_point, end_point)
+    :return: None
+    """
     if asts[brackets[0]].root.capture_group is not None:
         capture_group: int = asts[brackets[0]].root.capture_group
         for i in range(brackets[0] + 1, brackets[1]):
@@ -85,6 +91,11 @@ def bracket_pair_to_ast(asts: List[AST], brackets: List[int]) -> None:
 
 
 def concat_asts(asts: List[AST]) -> None:
+    """
+    Concatenates the ASTs.
+    :param asts: List of ASTs.
+    :return: None
+    """
     while len(asts) > 1:
         middle_node: AST.Node = AST.Node("")
         asts[0].ast_right(middle_node, asts[1].root)
@@ -92,6 +103,11 @@ def concat_asts(asts: List[AST]) -> None:
 
 
 def tokenize(expr: str) -> Tuple[List[AST], int]:
+    """
+    Tokenizes the expression.
+    :param expr: Expression in string type.
+    :return: List of ASTs
+    """
     asts: List[AST] = []
     start_elements: int = 0
     i: int = 0
@@ -125,6 +141,12 @@ def tokenize(expr: str) -> Tuple[List[AST], int]:
 
 
 def build_ast(expr: str) -> AST:
+    """
+    Builds the AST.
+    :param expr: Expression in string type.
+    :return: AST
+    """
+    logger.info(f"Building AST for {expr}")
     asts, start_elements = tokenize(expr)
 
     if asts[0].root.name != '(' or asts[-1].root.name != ')':
@@ -153,5 +175,5 @@ def build_ast(expr: str) -> AST:
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, filename="ast_logger.log",
-                        format=f"%(asctime)s %(levelname)s \n{'-' * 50}\n%(message)s{'-' * 50}\n", encoding="utf-8")
+                        format=f"%(asctime)s %(levelname)s %(message)s", encoding="utf-8")
     x = build_ast("(ABCD|AB+%))|(AB*){2,3}((SAD)+)")

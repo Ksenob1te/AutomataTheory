@@ -61,7 +61,7 @@ class AST(object):
 
         tree.create_node(str(self.root), 1)
         add_children(self.root, 1)
-        return tree.show(stdout=False)
+        return f"\n{'-' * 50}\n{tree.show(stdout=False)}{'-' * 50}\n"
 
     def ast_left(self, new_root: Node):
         new_root.left = self.root
