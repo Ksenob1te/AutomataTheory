@@ -47,7 +47,7 @@ class Operator:
         elif operator == "":
             self.type = Operator.Type.CONCAT
         elif operator == "/":
-            self.type  = Operator.Type.PREDICTIVE
+            self.type = Operator.Type.PREDICTIVE
 
     def __str__(self):
         return self.type.name

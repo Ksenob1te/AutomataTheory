@@ -140,6 +140,18 @@ def tokenize(expr: str) -> Tuple[List[AST], int]:
     return asts, start_elements
 
 
+def remove_shielding_symbols(ast: AST) -> None:
+    def check_recursive(node: AST.Node) -> None:
+        if node.name and node.name[0] == "%":
+            node.name = node.name[1:]
+        if node.left:
+            check_recursive(node.left)
+        if node.right:
+            check_recursive(node.right)
+
+    check_recursive(ast.root)
+
+
 def build_ast(expr: str) -> AST:
     """
     Builds the AST.
@@ -169,6 +181,7 @@ def build_ast(expr: str) -> AST:
     closest_brackets = [0, len(asts) - 1]
     bracket_pair_to_ast(asts, closest_brackets)
     concat_asts(asts)
+    remove_shielding_symbols(asts[0])
     logger.info(asts[0].text())
     return asts[0]
 

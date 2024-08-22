@@ -2,6 +2,7 @@ from __future__ import annotations
 from operator_class import Operator
 from treelib import Tree
 
+
 class AST(object):
     class Node:
         name: str = None
@@ -17,7 +18,6 @@ class AST(object):
                 if self.operand.type == arg:
                     return True
             return False
-
 
         def __init__(self, name: str = None, non_operand: bool = False):
             if non_operand:
@@ -35,7 +35,6 @@ class AST(object):
                 return self.name
             else:
                 return self.operand.type.name
-
 
     root: AST.Node = None
 
