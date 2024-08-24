@@ -1,13 +1,14 @@
 from __future__ import annotations
-from operator_class import Operator
+from .operator_class import Operator
 from treelib import Tree
+from typing import List
 
 
 class AST(object):
     class Node:
         name: str = None
         operand: Operator = None
-        capture_group: int = None
+        capture_group: List[int] = None
         left: AST.Node = None
         right: AST.Node = None
 
@@ -32,9 +33,9 @@ class AST(object):
 
         def __str__(self):
             if self.name:
-                return self.name
+                return self.name + f" ({self.capture_group})"
             else:
-                return self.operand.type.name
+                return self.operand.type.name + f" ({self.capture_group})"
 
     root: AST.Node = None
 
