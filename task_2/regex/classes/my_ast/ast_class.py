@@ -32,7 +32,7 @@ class AST(object):
                     self.name = name
 
         def __str__(self):
-            if self.name:
+            if self.name or not self.operand:
                 return self.name + f" ({self.capture_group})"
             else:
                 return self.operand.type.name + f" ({self.capture_group})"

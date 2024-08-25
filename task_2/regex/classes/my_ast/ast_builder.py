@@ -11,17 +11,17 @@ def set_capture_groups(asts: List[AST]) -> None:
     max_group = 0
     no_capture_group = False
     for i, ast in enumerate(asts):
+        if ast.root.name == "(!":
+            ast.root.name = "("
+            no_capture_group = True
+            continue
         if ast.root.name == "(":
-            if asts[i + 1].root.name == '!':
-                no_capture_group = True
-                continue
             max_group += 1
             current_capture.append(max_group)
         elif ast.root.name == ")":
             if no_capture_group:
-                continue
-            else:
                 no_capture_group = False
+                continue
             current_capture.pop()
         ast.root.capture_group = current_capture.copy()
 
@@ -99,14 +99,14 @@ def bracket_pair_to_ast(asts: List[AST], brackets: List[int]) -> None:
                     i -= 1
                 i += 1
 
-    def _collapse_asts(_asts: List[AST], _from_index: int, _to_index: int) -> None:
+    def _collapse_asts(_asts: List[AST], _from_index: int, _to_index: int) -> int:
         """
         Concatenates the ASTs.
         Resulting ASTs will be on `from_index` index
         :param _asts: List of ASTs.
         :param _from_index: index from where u want to collapse ASTs
         :param _to_index: index from where u want to end collapsing ASTs
-        :return: None
+        :return: last index
         """
 
         while _to_index - _from_index > 0:
@@ -116,6 +116,7 @@ def bracket_pair_to_ast(asts: List[AST], brackets: List[int]) -> None:
             _asts[_from_index].ast_right(middle_node, _asts[_from_index + 1].root)
             _asts.pop(_from_index + 1)
             _to_index -= 1
+        return _to_index
 
     # check for "+", "*" and "{}" operators
     # max priority
@@ -130,7 +131,7 @@ def bracket_pair_to_ast(asts: List[AST], brackets: List[int]) -> None:
     _bracket_alt_pred_ast(asts, brackets)
 
     # collapse all ASTs after all operations inside a bracket
-    _collapse_asts(asts, brackets[0] + 1, brackets[1] - 1)
+    brackets[1] = _collapse_asts(asts, brackets[0] + 1, brackets[1] - 1) + 1
 
 
 def tokenize(expr: str) -> Tuple[List[AST], int]:
@@ -149,23 +150,41 @@ def tokenize(expr: str) -> Tuple[List[AST], int]:
 
         name: str | None = element
         if element == '%':
-            asts.append(AST(element + expr[i + 1], non_operand=False))
+            if i == len(expr) - 1:
+                raise ValueError("Wrong % symbol while building AST")
+            asts.append(AST(element + expr[i + 1], non_operand=True))
             i += 2
             continue
+        elif element == '$':
+            asts.append(AST("", non_operand=True))
+            i += 1
+            continue
         elif element == '{':
+            if i == len(expr) - 1:
+                raise ValueError("Unbalanced {} brackets while building AST")
             j: int = i + 1
             while expr[j] != '}':
+                if j == len(expr) - 1:
+                    raise ValueError("Unbalanced {} brackets while building AST")
                 name += expr[j]
                 j += 1
             name += expr[j]
             i = j
         elif element == '[':
+            if i == len(expr) - 1:
+                raise ValueError("Unbalanced [] brackets while building AST")
             j: int = i + 1
             while expr[j] != ']':
+                if j == len(expr) - 1:
+                    raise ValueError("Unbalanced [] brackets while building AST")
                 name += expr[j]
                 j += 1
             name += expr[j]
             i = j
+        elif element == '(':
+            if i < len(expr) - 1 and expr[i + 1] == '!':
+                i += 1
+                name += expr[i]
         asts.append(AST(name))
         i += 1
     return asts, start_elements
@@ -206,6 +225,6 @@ def build_ast(expr: str) -> AST:
     closest_brackets = [-1, len(asts)]
     bracket_pair_to_ast(asts, closest_brackets)
     remove_shielding_symbols(asts[0])
-    logger.info(asts[0].text())
+    # logger.info(asts[0].text())
     return asts[0]
 

@@ -1,5 +1,3 @@
-import logging
-
 from ..my_ast import AST, Operator
 from ..status import Status
 from ..automat import Automat, fill_transition_sieve
@@ -11,6 +9,8 @@ def build_nfa(ast: AST, automat_id: int) -> Automat | Status:
             atm: Automat = Automat(automat_id=automat_id, operator=ast.root.operand)
         else:
             atm: Automat = Automat(automat_id=automat_id, transition=ast.root.name)
+        for group in ast.root.capture_group:
+            atm.add_capture_all_states(group)
         return atm
 
     nfa_left: Automat | Status | None = None
@@ -34,17 +34,20 @@ def build_nfa(ast: AST, automat_id: int) -> Automat | Status:
         selected_nfa: Automat = nfa_left if nfa_left is not None else nfa_right
         if ast.root.check_op(Operator.Type.REPEAT):
             selected_nfa.repeat_automat(ast.root.operand)
+            for group in ast.root.capture_group:
+                selected_nfa.add_capture_all_states(group)
             return selected_nfa
         else:
             return Status.INCORRECT_AST
     else:
         if ast.root.check_op(Operator.Type.CONCAT):
             nfa_left.cat_automat(nfa_right)
-            #TODO: capture groups
         elif ast.root.check_op(Operator.Type.ALTER):
             nfa_left.alter_automat(nfa_right)
         else:
             return Status.INCORRECT_AST
+        for group in ast.root.capture_group:
+            nfa_left.add_capture_all_states(group)
         return nfa_left
 
 

@@ -52,6 +52,7 @@ class Automat:
         self.end = -automat_id
         self.id = automat_id
         self.allowed_set.add(-automat_id)
+        self.current_set.add(automat_id)
         if transition is not None:
             self.add_transition(automat_id, -automat_id, transition)
             return
@@ -80,10 +81,12 @@ class Automat:
                     if status:
                         states_text += f"{from_id} ----- {condition} ----> {to_id}\n"
         text = f"""
-________Automat________
+-Automat------------------------------------------
 start: {self.start}, end: {self.end}
 allowed_states: {self.allowed_set}
+capture_groups: {self.capture_groups}
 {states_text}
+--------------------------------------------------
 """
         return text
 
@@ -101,12 +104,25 @@ allowed_states: {self.allowed_set}
             return a
 
         __merge_dicts(self.state_map, atm.state_map)
-        # TODO: merge capture groups
+        for capture_group, state_ids in atm.capture_groups.items():
+            self.capture_groups[capture_group] = self.capture_groups.get(capture_group, set())
+            for state_id in state_ids:
+                self.capture_groups[capture_group].add(state_id)
         # self.start = atm.start
         # self.end = atm.end
+    def add_capture(self, state_id: int, capture_id: int) -> None:
+        self.capture_groups[capture_id] = self.capture_groups.get(capture_id, set())
+        self.capture_groups[capture_id].add(state_id)
+
+    def add_capture_all_states(self, capture_id: int) -> None:
+        for from_id, value in self.state_map.items():
+            self.add_capture(from_id, capture_id)
+            for to_id, transition in value.items():
+                self.add_capture(to_id, capture_id)
 
     def add_transition(self, from_id: int, to_id: int, condition: str) -> None:
         self.state_map[from_id] = self.state_map.get(from_id, {})
+        self.state_map[to_id] = self.state_map.get(to_id, {})
         self.state_map[from_id][to_id] = self.state_map[from_id].get(to_id, transition_sieve.copy())
         if len(condition) > 1 or condition not in self.state_map[from_id][to_id]:
             return
@@ -130,6 +146,8 @@ allowed_states: {self.allowed_set}
         self.start = self.start + 1
         self.end = self.end + 1
         self.id = self.id + 1
+        self.allowed_set.add(self.end)
+        self.allowed_set.add(self.start)
         self.add_transition(self.start, self.end, "")
 
     def _range_automat(self, operator: Operator) -> None:
@@ -150,17 +168,17 @@ allowed_states: {self.allowed_set}
             multipleCopy.start = (i + 2) * starter_atm.start
             multipleCopy.end = starter_atm.end - (i + 1) * starter_atm.start
 
-            # TODO: current states
-            for allowed_state in self.allowed_set:
-                multipleCopy.allowed_set.add(allowed_state + ((i + 1) * starter_atm.start) if allowed_state > 0 else (
-                            -(i + 1) * starter_atm.start))
-            for current_state in self.current_set:
-                multipleCopy.allowed_set.add(current_state + ((i + 1) * starter_atm.start) if current_state > 0 else (
-                            -(i + 1) * starter_atm.start))
+            for allowed_state in starter_atm.allowed_set:
+                multipleCopy.allowed_set.add(allowed_state + (((i + 1) * starter_atm.start) if allowed_state > 0 else (
+                            -(i + 1) * starter_atm.start)))
+            for current_state in starter_atm.current_set:
+                multipleCopy.allowed_set.add(current_state + (((i + 1) * starter_atm.start) if current_state > 0 else (
+                            -(i + 1) * starter_atm.start)))
 
             temp_end: int = self.end
             self._merge(multipleCopy)
             self.start = starter_atm.start
+            self.end = multipleCopy.end
             self.add_transition(temp_end, multipleCopy.start, "")
             self.current_set = multipleCopy.current_set
             self.allowed_set = multipleCopy.allowed_set
@@ -194,9 +212,11 @@ allowed_states: {self.allowed_set}
         self.add_transition(new_start, self.start, "")
         self.add_transition(atm.end, new_end, "")
         self.add_transition(self.end, atm.start, "")
+        # self.allowed_set.clear()
         self.allowed_set.clear()
         self.allowed_set.add(new_end)
-        self.allowed_set.add(atm.end)
+        for atm_allowed in atm.allowed_set:
+            self.allowed_set.add(atm_allowed)
         self.id = new_id
         self.start = new_start
         self.end = new_end
@@ -211,9 +231,9 @@ allowed_states: {self.allowed_set}
         self.add_transition(new_start, atm.start, "")
         self.add_transition(self.end, new_end, "")
         self.add_transition(atm.end, new_end, "")
-        self.allowed_set.clear()
+        # self.allowed_set.clear()
         self.allowed_set.add(new_end)
-        self.allowed_set.add(self.end)
+        # self.allowed_set.add(self.end)
         self.allowed_set.add(atm.end)
         self.id = new_id
         self.start = new_start
