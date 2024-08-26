@@ -21,6 +21,7 @@ class Automat:
     current_set: Set[int] = None
     allowed_set: Set[int] = None
     capture_groups: Dict[int, Set[int]] = None
+    search_capture_map: Dict[int, Set[int]] = None
 
     start: int = None
     end: int = None
@@ -119,6 +120,14 @@ capture_groups: {self.capture_groups}
             self.add_capture(from_id, capture_id)
             for to_id, transition in value.items():
                 self.add_capture(to_id, capture_id)
+
+    def fill_search_capture_map(self) -> None:
+        self.search_capture_map = {}
+        if self.capture_groups:
+            for capture_id, states in self.capture_groups.items():
+                for state in states:
+                    self.search_capture_map[state] = self.search_capture_map.get(state, set())
+                    self.search_capture_map[state].add(capture_id)
 
     def add_transition(self, from_id: int, to_id: int, condition: str) -> None:
         self.state_map[from_id] = self.state_map.get(from_id, {})

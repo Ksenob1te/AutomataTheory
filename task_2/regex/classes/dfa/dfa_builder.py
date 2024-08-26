@@ -16,7 +16,7 @@ class _frozen_state_group:
         self.id = _frozen_state_group._group_id
         _frozen_state_group._group_id += 1
 
-def _next_state_set(atm: Automat, state_set: FrozenSet[int] | Set[int], condition: str, is_nfa: bool = True) -> Set[int] | Status:
+def next_state_set(atm: Automat, state_set: FrozenSet[int] | Set[int], condition: str, is_nfa: bool = True) -> Set[int]:
     if type(state_set) == set:
         _state_set = frozenset(state_set)
     visited_states: Set[int] = set()
@@ -25,7 +25,7 @@ def _next_state_set(atm: Automat, state_set: FrozenSet[int] | Set[int], conditio
         for state in _state_set:
             if state not in _atm.state_map:
                 logging.error("_next_state_set error, wrong state_set, state doesnt exists")
-                return Status.WRONG_STATE_SET
+                raise ValueError("wrong state_set when trying to _next_state_set()")
             from_id: int = state
             for to_id, transitions in _atm.state_map[from_id].items():
                 if transitions[_condition]:
@@ -44,7 +44,7 @@ def _next_state_set(atm: Automat, state_set: FrozenSet[int] | Set[int], conditio
 
 def build_dfa(nfa: Automat) -> Automat | Status:
     dfa: Automat = Automat()
-    starting_set: Set[int] | Status = _next_state_set(nfa, {nfa.start}, "", True)
+    starting_set: Set[int] | Status = next_state_set(nfa, {nfa.start}, "", True)
     if type(starting_set) is Status:
         return starting_set
     starting_set.add(nfa.start)
@@ -57,10 +57,10 @@ def build_dfa(nfa: Automat) -> Automat | Status:
     while not state_queue.empty():
         candidate_group = state_queue.get()
         for char in alphabet:
-            char_states: Set[int] | Status = _next_state_set(nfa, candidate_group.states, char, True)
+            char_states: Set[int] | Status = next_state_set(nfa, candidate_group.states, char, True)
             if type(char_states) is Status:
                 return char_states
-            after_epsilon: Set[int] | Status = _next_state_set(nfa, char_states, "", True)
+            after_epsilon: Set[int] | Status = next_state_set(nfa, char_states, "", True)
             if type(after_epsilon) is Status:
                 return after_epsilon
             char_states.update(after_epsilon)
