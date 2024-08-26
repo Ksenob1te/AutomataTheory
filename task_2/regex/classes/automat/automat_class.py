@@ -1,4 +1,4 @@
-from typing import Dict, Set, List
+from typing import Dict, Set, List, Tuple
 from string import digits, ascii_letters, punctuation
 from ..my_ast import Operator
 from ..status import Status
@@ -20,8 +20,8 @@ class Automat:
     state_map: Dict[int, Dict[int, Dict[str, bool]]] = None
     current_set: Set[int] = None
     allowed_set: Set[int] = None
-    capture_groups: Dict[int, Set[int]] = None
-    search_capture_map: Dict[int, Set[int]] = None
+    capture_groups: Dict[int, Set[Tuple[int, int]]] = None
+    search_capture_map: Dict[Tuple[int, int], Set[int]] = None
 
     start: int = None
     end: int = None
@@ -111,15 +111,15 @@ capture_groups: {self.capture_groups}
                 self.capture_groups[capture_group].add(state_id)
         # self.start = atm.start
         # self.end = atm.end
-    def add_capture(self, state_id: int, capture_id: int) -> None:
+    def add_capture(self, transition_ids: Tuple[int, int], capture_id: int) -> None:
         self.capture_groups[capture_id] = self.capture_groups.get(capture_id, set())
-        self.capture_groups[capture_id].add(state_id)
+        self.capture_groups[capture_id].add(transition_ids)
 
     def add_capture_all_states(self, capture_id: int) -> None:
         for from_id, value in self.state_map.items():
-            self.add_capture(from_id, capture_id)
+            # self.add_capture(from_id, capture_id)
             for to_id, transition in value.items():
-                self.add_capture(to_id, capture_id)
+                self.add_capture((from_id, to_id), capture_id)
 
     def fill_search_capture_map(self) -> None:
         self.search_capture_map = {}
@@ -128,6 +128,9 @@ capture_groups: {self.capture_groups}
                 for state in states:
                     self.search_capture_map[state] = self.search_capture_map.get(state, set())
                     self.search_capture_map[state].add(capture_id)
+
+    def add_state(self, from_id: int) -> None:
+        self.state_map[from_id] = self.state_map.get(from_id, {})
 
     def add_transition(self, from_id: int, to_id: int, condition: str) -> None:
         self.state_map[from_id] = self.state_map.get(from_id, {})
@@ -161,6 +164,7 @@ capture_groups: {self.capture_groups}
 
     def _range_automat(self, operator: Operator) -> None:
         starter_atm: Automat = deepcopy(self)
+        self.id = self.id + operator.max_repetitions * starter_atm.start
         for i in range(operator.max_repetitions - 1):
             multipleCopy: Automat = Automat()
             for from_id, to_dict in starter_atm.state_map.items():
@@ -181,7 +185,7 @@ capture_groups: {self.capture_groups}
                 multipleCopy.allowed_set.add(allowed_state + (((i + 1) * starter_atm.start) if allowed_state > 0 else (
                             -(i + 1) * starter_atm.start)))
             for current_state in starter_atm.current_set:
-                multipleCopy.allowed_set.add(current_state + (((i + 1) * starter_atm.start) if current_state > 0 else (
+                multipleCopy.current_set.add(current_state + (((i + 1) * starter_atm.start) if current_state > 0 else (
                             -(i + 1) * starter_atm.start)))
 
             temp_end: int = self.end

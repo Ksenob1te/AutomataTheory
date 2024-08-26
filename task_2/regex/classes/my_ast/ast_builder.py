@@ -9,18 +9,18 @@ logger = logging.getLogger(__name__)
 def set_capture_groups(asts: List[AST]) -> None:
     current_capture: List[int] = []
     max_group = 0
-    no_capture_group = False
+    no_capture_group: List[bool] = []
     for i, ast in enumerate(asts):
         if ast.root.name == "(!":
             ast.root.name = "("
-            no_capture_group = True
+            no_capture_group.append(True)
             continue
-        if ast.root.name == "(":
+        elif ast.root.name == "(":
             max_group += 1
             current_capture.append(max_group)
+            no_capture_group.append(False)
         elif ast.root.name == ")":
-            if no_capture_group:
-                no_capture_group = False
+            if no_capture_group.pop():
                 continue
             current_capture.pop()
         ast.root.capture_group = current_capture.copy()
@@ -75,7 +75,7 @@ def bracket_pair_to_ast(asts: List[AST], brackets: List[int]) -> None:
         while (_brackets[1] - _brackets[0] != 2) and (i < _brackets[1]):
             if (not _asts[i].root.check_op(Operator.Type.PREDICTIVE, Operator.Type.ALTER) and
                     not _asts[i - 1].root.check_op(Operator.Type.PREDICTIVE, Operator.Type.ALTER)):
-                capture_group: List[int] = _asts[i].root.capture_group
+                capture_group: List[int] = [j for j in _asts[i].root.capture_group if j in _asts[i - 1].root.capture_group]
                 middle_node: AST.Node = AST.Node("")
                 middle_node.capture_group = capture_group
                 _asts[i - 1].ast_right(middle_node, _asts[i].root)
@@ -110,7 +110,7 @@ def bracket_pair_to_ast(asts: List[AST], brackets: List[int]) -> None:
         """
 
         while _to_index - _from_index > 0:
-            capture_group: List[int] = _asts[_from_index].root.capture_group
+            capture_group: List[int] = [j for j in _asts[_from_index].root.capture_group if j in _asts[_from_index + 1].root.capture_group]
             middle_node: AST.Node = AST.Node("")
             middle_node.capture_group = capture_group
             _asts[_from_index].ast_right(middle_node, _asts[_from_index + 1].root)

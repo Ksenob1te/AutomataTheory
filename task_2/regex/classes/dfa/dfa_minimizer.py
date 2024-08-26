@@ -3,7 +3,7 @@ import queue
 
 from ..status import Status
 from ..automat import Automat, alphabet
-from typing import Set, Dict, List, FrozenSet
+from typing import Set, Dict, List, FrozenSet, Tuple
 from queue import Queue
 from enum import Enum
 
@@ -29,8 +29,8 @@ def _split_groups(dfa: Automat) -> List[_state_group]:
     states_capture_groups: Dict[int, Set[int]] = {}
     for capture_group, states in dfa.capture_groups.items():
         for state in states:
-            states_capture_groups[state] = states_capture_groups.get(state, set())
-            states_capture_groups[state].add(capture_group)
+            states_capture_groups[state[0]] = states_capture_groups.get(state[0], set())
+            states_capture_groups[state[0]].add(capture_group)
 
     capture_groups_states: Dict[FrozenSet[int], Set[int]] = {}
     for state, capture_groups_set in states_capture_groups.items():
@@ -56,8 +56,9 @@ def _split_groups(dfa: Automat) -> List[_state_group]:
     for state, value in dfa.state_map.items():
         is_captured: bool = False
         for capture_index, state_set in dfa.capture_groups.items():
-            if state in state_set:
-                is_captured = True
+            for state_tuple in state_set:
+                if state == state_tuple[0]:
+                    is_captured = True
         if not is_captured:
             if state in dfa.allowed_set:
                 non_captured_allowed.add(state)
@@ -133,16 +134,24 @@ def _analyse_group(dfa: Automat, unbound_groups: List[_state_group]) -> List[_st
 
 def _recreate_dfa(dfa: Automat, unbound_groups: List[_state_group]) -> Automat:
     min_dfa: Automat = Automat()
+    state_group_id: Dict[int, int] = {}
+
+    for group in unbound_groups:
+        for state in group.states:
+            state_group_id[state] = group.id
+
     for group in unbound_groups:
         for state in group.states:
             if state in dfa.allowed_set:
                 min_dfa.allowed_set.add(group.id)
             if state == dfa.start:
                 min_dfa.start = group.id
-            if dfa.capture_groups:
-                for cp_group_id, cp_states in dfa.capture_groups.items():
-                    if state in cp_states:
-                        min_dfa.add_capture(group.id, cp_group_id)
+            if not dfa.capture_groups:
+                continue
+            for cp_group_id, cp_states in dfa.capture_groups.items():
+                for cp_state in cp_states:
+                    if cp_state[0] == state:
+                        min_dfa.add_capture((group.id, state_group_id[cp_state[1]]), cp_group_id)
 
     for group_1 in unbound_groups:
         for from_id in group_1.states:
@@ -154,10 +163,22 @@ def _recreate_dfa(dfa: Automat, unbound_groups: List[_state_group]) -> Automat:
     return min_dfa
 
 
+def _clear_capture_groups(dfa: Automat):
+    new_capture_group: Dict[int, Set[Tuple[int, int]]] = {}
+    for cp_group_id, cp_group_tuples in dfa.capture_groups.items():
+        new_capture_group[cp_group_id] = new_capture_group.get(cp_group_id, set())
+        for cp_group_tuple in cp_group_tuples:
+            if cp_group_tuple[1] in dfa.state_map[cp_group_tuple[0]]:
+                new_capture_group[cp_group_id].add(cp_group_tuple)
+    dfa.capture_groups = new_capture_group
+
+
 def dfa_minimizer(dfa: Automat) -> Automat:
     unbound_groups = _split_groups(dfa)
     unbound_groups = _analyse_group(dfa, unbound_groups)
-    return _recreate_dfa(dfa, unbound_groups)
+    dfa = _recreate_dfa(dfa, unbound_groups)
+    _clear_capture_groups(dfa)
+    return dfa
 
 
 

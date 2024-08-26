@@ -3,7 +3,7 @@ import queue
 
 from ..status import Status
 from ..automat import Automat, alphabet
-from typing import Set, Dict, List, FrozenSet
+from typing import Set, Dict, List, FrozenSet, Tuple
 from queue import Queue
 
 class _frozen_state_group:
@@ -73,13 +73,88 @@ def build_dfa(nfa: Automat) -> Automat | Status:
                     state_queue.put(current_group)
                     group_dict[current_group.states] = current_group.id
                     dfa.add_transition(candidate_group.id, current_group.id, char)
+
+    states_groups_id: Dict[int, Set[int]] = {}
+    for group_set, group_id in group_dict.items():
+        for state in group_set:
+            states_groups_id[state] = states_groups_id.get(state, set())
+            states_groups_id[state].add(group_id)
+
+    # group_root: Dict[int, int] = {}
+    # for group_set, group_id in group_dict.items():
+    #     for state in group_set:
+    #         is_state: bool = True
+    #         for from_id, values in nfa.state_map.items():
+    #             for to_id, transition in values.items():
+    #                 if to_id == state and [x for x in states_groups_id[state] if x in states_groups_id[from_id] and x == group_id]:
+    #                     is_state = False
+    #                     break
+    #             if not is_state:
+    #                 break
+    #         if is_state:
+    #             group_root[group_id] = state
+    #
+    # achievable_in_group: Dict[int, Dict[int, Set[int]]] = {}
+    # def _find_all_capture(_state, _capture_id, _cp_states, _group_id) -> Set[int]:
+    #     _achievable: Set[int] = set()
+    #     def __recursive(__state):
+    #         for _cp_state in _cp_states:
+    #             if _cp_state[0] == __state:
+    #                 if _cp_state[1] not in _achievable and _group_id in states_groups_id[_cp_state[1]]:
+    #                     _achievable.add(_cp_state[1])
+    #                     __recursive(_cp_state[1])
+    #     __recursive(_state)
+    #     return _achievable
+    #
+    # for group_set, group_id in group_dict.items():
+    #     achievable_in_group[group_id] = achievable_in_group.get(group_id, {})
+    #     for cp_group, cp_states in nfa.capture_groups.items():
+    #         achievable_in_group[group_id][cp_group] = _find_all_capture(group_root[group_id], cp_group, cp_states, group_id)
+
+
+    def _check_group_cycle(_state: int, _group_set: FrozenSet[int]) -> bool:
+        _achievable: Set[int] = set()
+        def __recursive(__state):
+            for __from_id, __values in nfa.state_map.items():
+                if __from_id != __state:
+                    continue
+                for __to_id, __transitions in __values.items():
+                    if __to_id not in _group_set:
+                        continue
+                    if __to_id in _achievable:
+                        return True
+                    _achievable.add(__to_id)
+                    status = __recursive(__to_id)
+                    if status:
+                        return True
+        return __recursive(_state)
+
+
     for group_set, group_id in group_dict.items():
         for state in group_set:
             if state in nfa.allowed_set:
                 dfa.allowed_set.add(group_id)
-            if nfa.capture_groups:
-                for cp_group, cp_states in nfa.capture_groups.items():
-                    if state in cp_states:
-                        dfa.add_capture(group_id, cp_group)
+            if not nfa.capture_groups:
+                continue
+            for cp_group, cp_states in nfa.capture_groups.items():
+                for cp_state in cp_states:
+                    if state == cp_state[0]:
+                        searching_groups = states_groups_id[cp_state[1]].copy()
+                        transitions = nfa.state_map.get(cp_state[0], {}).get(cp_state[1], {})
+                        if not transitions:
+                            continue
+                        if transitions.get("", False):
+                            if _check_group_cycle(state, group_set):
+                                searching_groups = [group_id]
+                            else:
+                                searching_groups = []
+                        elif group_id in searching_groups:
+                            searching_groups.remove(group_id)
+                        for group in searching_groups:
+                            dfa.add_capture((group_id, group), cp_group)
+                            # dfa.add_capture((group_id, group_id), cp_group)
+
+                    # if cp_state[1] == state:
+                    #     dfa.add_capture((states_groups_id[cp_state[0]], group_id), cp_group)
 
     return dfa
