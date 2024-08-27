@@ -3,6 +3,7 @@ import logging
 from ..my_ast import AST, Operator
 from ..automat import Automat, fill_transition_sieve
 
+
 def build_nfa(ast: AST, automat_id: int) -> Automat:
     fill_transition_sieve()
     if ast.root.left is None and ast.root.right is None:

@@ -69,11 +69,13 @@ def _rename_states(atm: Automat):
     atm.state_map = new_state_map
 
     for allowed in atm.allowed_set:
-        new_allowed_set.add(state_dict[allowed])
+        if allowed in state_dict:
+            new_allowed_set.add(state_dict[allowed])
     atm.allowed_set = new_allowed_set
 
     for current in atm.current_set:
-        new_current_set.add(state_dict[current])
+        if current in state_dict:
+            new_current_set.add(state_dict[current])
     atm.current_set = new_current_set
 
     for cp_group, cp_tuples in atm.capture_groups.items():

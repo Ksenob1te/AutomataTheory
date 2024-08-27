@@ -7,7 +7,8 @@ if __name__ == "__main__":
                         format=f"%(asctime)s %(levelname)s %(message)s", encoding="utf-8")
     # x = build("(ABCD|AB+%))|(AB*){2,3}((SAD)+)")
     # x = build("(AD|B+%))|(AB*){0,3}")
-    x = build_ast("(AB*){1,3}")
-    # x = build("(ABCD|AB+%))|(AB*){2,3}((SAD)+)[1-3abc]")
-    x = build_nfa(x, 1)
-    logging.info(str(x))
+    x = "a|bc"
+    ast = build_ast(x)
+    nfa = build_nfa(ast, 1)
+    nfa2 = build_nfa(ast, 1)
+    logging.info(str(nfa2))

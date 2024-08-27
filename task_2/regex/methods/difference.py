@@ -5,6 +5,7 @@ from typing import List, Dict, Set
 from .product import product_dfa
 logger = logging.getLogger(__name__)
 
+
 def difference_dfa(dfa_1: Automat | str, dfa_2: Automat | str) -> Automat:
     """
     Difference of two automatons which will accept all strings that are accepted by the first automat but not by the second
@@ -23,5 +24,6 @@ def difference_dfa(dfa_1: Automat | str, dfa_2: Automat | str) -> Automat:
     for allowed_1 in dfa_1.allowed_set:
         for states_2 in dfa_2.state_map.keys():
             if states_2 not in dfa_2.allowed_set:
-                result.allowed_set.add(allowed_1 * 100 + states_2)
+                result.allowed_set.add(allowed_1 * 100 - 1)
+    result.fill_search_capture_map()
     return result
