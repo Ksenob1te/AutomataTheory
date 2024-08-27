@@ -4,7 +4,13 @@ import logging
 from typing import List, Dict, Set, Tuple
 logger = logging.getLogger(__name__)
 
-def product_dfa(dfa_1: Automat, dfa_2: Automat):
+def product_dfa(dfa_1: Automat, dfa_2: Automat) -> Automat:
+    """
+    Product of two DFAs is a DFA that accepts the intersection of the languages of the two DFAs.
+    :param dfa_1: First DFA
+    :param dfa_2: Second DFA
+    :return: Product of two DFAs
+    """
     result: Automat = Automat()
     # for state_first in dfa_1.state_map.keys():
     #     for state_second in dfa_2.state_map.keys():

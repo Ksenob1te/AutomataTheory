@@ -3,6 +3,9 @@ from typing import Set
 
 
 class Operator:
+    """
+    Operator class for AST.
+    """
     class Type(Enum):
         CONCAT = 1
         ALTER = 2

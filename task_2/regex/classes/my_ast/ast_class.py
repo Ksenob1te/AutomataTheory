@@ -5,7 +5,13 @@ from typing import List
 
 
 class AST(object):
+    """
+    Abstract Syntax Tree class.
+    """
     class Node:
+        """
+        Node class for AST.
+        """
         name: str = None
         operand: Operator = None
         capture_group: List[int] = None
@@ -49,6 +55,10 @@ class AST(object):
         return str(self.root)
 
     def text(self) -> str:
+        """
+        Returns the text representation of the AST with tree view
+        :return: str
+        """
         tree = Tree()
 
         def add_children(local_root: AST.Node, identifier: int):
@@ -64,18 +74,39 @@ class AST(object):
         return f"\n{'-' * 50}\n{tree.show(stdout=False)}{'-' * 50}\n"
 
     def ast_left(self, new_root: Node):
+        """
+        Moves current root to the left of the new root.
+        :param new_root:
+        :return:
+        """
         new_root.left = self.root
         self.root = new_root
 
     def ast_right(self, new_root: Node, right: AST.Node):
+        """
+        Moves current root to the left of the new root and sets the right node.
+        :param new_root: Node to be set as a new root.
+        :param right: AST Node to be set as a right node.
+        :return:
+        """
         new_root.left = self.root
         new_root.right = right
         self.root = new_root
 
     def set_left(self, left: Node):
+        """
+        Sets the left node of the current root.
+        :param left:
+        :return:
+        """
         self.root.left = left
 
     def set_right(self, right: Node):
+        """
+        Sets the right node of the current root.
+        :param right:
+        :return:
+        """
         self.root.right = right
 
 

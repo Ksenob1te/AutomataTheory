@@ -3,6 +3,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 def re_compile(expr: str) -> Automat:
+    """
+    Compile a regex expression into a DFA with logging
+    :param expr: str - regex expression
+    :return: Automat - DFA
+    """
     expr_ast: AST = build_ast(expr)
     logger.info(f"Built AST for the regex: {expr}\n{expr_ast.text()}")
     expr_nfa: Automat = build_nfa(expr_ast, 1)

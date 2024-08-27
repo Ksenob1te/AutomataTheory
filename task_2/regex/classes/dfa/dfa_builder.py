@@ -1,7 +1,6 @@
 import logging
 import queue
 
-from ..status import Status
 from ..automat import Automat, alphabet
 from typing import Set, Dict, List, FrozenSet, Tuple
 from queue import Queue
@@ -17,10 +16,19 @@ class _frozen_state_group:
         _frozen_state_group._group_id += 1
 
 def next_state_set(atm: Automat, state_set: FrozenSet[int] | Set[int], condition: str, is_nfa: bool = True) -> Set[int]:
+    """
+    Generate next state set from current state set
+    Will return a set of states that can be reached from the current state set using selected condition
+    :param atm: Automat
+    :param state_set: Set[int] | FrozenSet[int] from where to start the search
+    :param condition: str condition to search for
+    :param is_nfa: bool if the automat is nfa
+    :return: Set[int] set of states that can be reached
+    """
     if type(state_set) == set:
         _state_set = frozenset(state_set)
     visited_states: Set[int] = set()
-    def _recursive_func(_atm: Automat, _state_set: FrozenSet[int], _condition: str, _is_nfa: bool = True):
+    def _recursive_func(_atm: Automat, _state_set: FrozenSet[int], _condition: str, _is_nfa: bool = True) -> Set[int]:
         resulting_set: Set[int] = set()
         for state in _state_set:
             if state not in _atm.state_map:
@@ -34,19 +42,20 @@ def next_state_set(atm: Automat, state_set: FrozenSet[int] | Set[int], condition
                 next_set = resulting_set.difference(visited_states)
                 visited_states.update(resulting_set)
                 recursive_set = _recursive_func(_atm, frozenset(next_set), _condition)
-                if type(recursive_set) is Status:
-                    return recursive_set
                 resulting_set.update(recursive_set)
         return resulting_set
 
     return _recursive_func(atm, state_set, condition, is_nfa)
 
 
-def build_dfa(nfa: Automat) -> Automat | Status:
+def build_dfa(nfa: Automat) -> Automat:
+    """
+    Build a dfa from nfa
+    :param nfa: Automat
+    :return:
+    """
     dfa: Automat = Automat()
-    starting_set: Set[int] | Status = next_state_set(nfa, {nfa.start}, "", True)
-    if type(starting_set) is Status:
-        return starting_set
+    starting_set: Set[int] = next_state_set(nfa, {nfa.start}, "", True)
     starting_set.add(nfa.start)
     state_queue: Queue[_frozen_state_group] = Queue()
     starting_group = _frozen_state_group(starting_set)
@@ -57,12 +66,8 @@ def build_dfa(nfa: Automat) -> Automat | Status:
     while not state_queue.empty():
         candidate_group = state_queue.get()
         for char in alphabet:
-            char_states: Set[int] | Status = next_state_set(nfa, candidate_group.states, char, True)
-            if type(char_states) is Status:
-                return char_states
-            after_epsilon: Set[int] | Status = next_state_set(nfa, char_states, "", True)
-            if type(after_epsilon) is Status:
-                return after_epsilon
+            char_states: Set[int] = next_state_set(nfa, candidate_group.states, char, True)
+            after_epsilon: Set[int] = next_state_set(nfa, char_states, "", True)
             char_states.update(after_epsilon)
             current_group = _frozen_state_group(char_states)
 

@@ -20,9 +20,11 @@ def set_capture_groups(asts: List[AST]) -> None:
             current_capture.append(max_group)
             no_capture_group.append(False)
         elif ast.root.name == ")":
+            ast.root.capture_group = current_capture.copy()
             if no_capture_group.pop():
                 continue
             current_capture.pop()
+            continue
         ast.root.capture_group = current_capture.copy()
 
 
@@ -75,7 +77,10 @@ def bracket_pair_to_ast(asts: List[AST], brackets: List[int]) -> None:
         while (_brackets[1] - _brackets[0] != 2) and (i < _brackets[1]):
             if (not _asts[i].root.check_op(Operator.Type.PREDICTIVE, Operator.Type.ALTER) and
                     not _asts[i - 1].root.check_op(Operator.Type.PREDICTIVE, Operator.Type.ALTER)):
-                capture_group: List[int] = [j for j in _asts[i].root.capture_group if j in _asts[i - 1].root.capture_group]
+                if _asts[i].root.capture_group:
+                    capture_group: List[int] = [j for j in _asts[i].root.capture_group if j in _asts[i - 1].root.capture_group]
+                else:
+                    capture_group: List[int] = []
                 middle_node: AST.Node = AST.Node("")
                 middle_node.capture_group = capture_group
                 _asts[i - 1].ast_right(middle_node, _asts[i].root)

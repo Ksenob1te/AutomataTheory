@@ -16,7 +16,13 @@ class Re_Result:
         text = f"\nCapture groups: {self.groups}\nResulted detection: {self.detection}\n"
         return text
 
-def re_findall(expr: str | Automat, string: str):
+def re_findall(expr: str | Automat, string: str) -> List[Re_Result]:
+    """
+    Find all occurrences of the expression in the string
+    :param expr: str | Automat:
+    :param string: str: string to search in
+    :return: List[Re_Result]: list of Re_Result objects
+    """
     if type(expr) == str:
         atm: Automat = re_compile(expr)
     else:
@@ -102,7 +108,8 @@ def re_findall(expr: str | Automat, string: str):
                 last_result = Re_Result(result, captures.copy())
 
             # make it use the longest valid + think on a reset for e.g (abcde)|(bcdf) can crash it
-
+    if last_result:
+        correct.append(last_result)
     return correct
 
 

@@ -35,9 +35,10 @@ class State_Set:
     def __len__(self):
         return len(self.state)
 
+special_chars = "|*+[]{}()/!"
 
 def _get_transition_set(transitions: Dict[str, bool]) -> Set[str]:
-    return set([char for char, allowed in transitions.items() if allowed])
+    return set([("%" if char in special_chars else "") + char for char, allowed in transitions.items() if allowed])
 
 
 def _create_basis(atm: Automat, n: int) -> Dict[int, Dict[int, State_Set]]:
@@ -85,6 +86,11 @@ def _rename_states(atm: Automat):
 
 
 def re_k_path(atm: Automat) -> str:
+    """
+    This function returns the regex of the given automat using the k-path algorithm
+    :param atm: Automat
+    :return: str regex
+    """
     _rename_states(atm)
     n: int = max(atm.state_map.keys())
     # struct is {k: from: to: regex}

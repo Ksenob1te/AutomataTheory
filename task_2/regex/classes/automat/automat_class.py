@@ -1,7 +1,7 @@
+import logging
 from typing import Dict, Set, List, Tuple
 from string import digits, ascii_letters, punctuation
 from ..my_ast import Operator
-from ..status import Status
 from copy import copy, deepcopy
 
 alphabet = digits + ascii_letters + punctuation + " "
@@ -9,6 +9,7 @@ transition_sieve: Dict[str, bool] = {}
 
 
 def fill_transition_sieve() -> None:
+    """Filling the transition sieve, required for automat to work"""
     if transition_sieve != {}:
         return
     for char in alphabet:
@@ -17,6 +18,9 @@ def fill_transition_sieve() -> None:
 
 
 class Automat:
+    """
+    Automat class, used for building automat from ast
+    """
     state_map: Dict[int, Dict[int, Dict[str, bool]]] = None
     current_set: Set[int] = None
     allowed_set: Set[int] = None
@@ -27,7 +31,13 @@ class Automat:
     end: int = None
     id: int = None
 
-    def _set_range_automat(self, set_range: Set):
+    def _set_range_automat(self, set_range: Set[str]):
+        """
+        Set range automat, used for building automat from set range operator
+        :type set_range: Set[str]
+        :param set_range: Set of characters
+        :return: None
+        """
         new_start = self.id + len(set_range)
         new_end = -(self.id + len(set_range))
         new_id = self.id + len(set_range)
@@ -42,7 +52,14 @@ class Automat:
         self.start = new_start
         self.end = new_end
 
-    def __init__(self, automat_id: int = None, transition: str = None, operator: Operator = None):
+    def __init__(self, automat_id: int = 1, transition: str = None, operator: Operator = None):
+        """
+        Automat constructor
+        Only one of transition or operator should be set
+        :param automat_id: id of an automat
+        :param transition: char for transition or empty string for the epsilon transition
+        :param operator: operator for automat (for e.g. for the range operator)
+        """
         self.state_map = {}
         self.current_set = set()
         self.allowed_set = set()
@@ -92,6 +109,12 @@ capture_groups: {self.capture_groups}
         return text
 
     def _merge(self, atm: 'Automat') -> None:
+        """
+        Merge two automat objects, second one will be merged with the first one
+        :type atm: Automat
+        :param atm: Automat to merge with
+        :return: None
+        """
         if self.id == atm.id:
             return
 
@@ -112,16 +135,31 @@ capture_groups: {self.capture_groups}
         # self.start = atm.start
         # self.end = atm.end
     def add_capture(self, transition_ids: Tuple[int, int], capture_id: int) -> None:
+        """
+        Add capture transition to the automat
+        :param transition_ids: Ids for the transition
+        :param capture_id: Capture id
+        :return: None
+        """
         self.capture_groups[capture_id] = self.capture_groups.get(capture_id, set())
         self.capture_groups[capture_id].add(transition_ids)
 
     def add_capture_all_states(self, capture_id: int) -> None:
+        """
+        Add capture transition to all states for the selected capture
+        :param capture_id: Capture id
+        :return: None
+        """
         for from_id, value in self.state_map.items():
             # self.add_capture(from_id, capture_id)
             for to_id, transition in value.items():
                 self.add_capture((from_id, to_id), capture_id)
 
     def fill_search_capture_map(self) -> None:
+        """
+        Fill the search capture map, used for searching captures from the transitions
+        :return: None
+        """
         self.search_capture_map = {}
         if self.capture_groups:
             for capture_id, states in self.capture_groups.items():
@@ -130,9 +168,21 @@ capture_groups: {self.capture_groups}
                     self.search_capture_map[state].add(capture_id)
 
     def add_state(self, from_id: int) -> None:
+        """
+        Add state to the automat (without transitions)
+        :param from_id: state id
+        :return: None
+        """
         self.state_map[from_id] = self.state_map.get(from_id, {})
 
     def add_transition(self, from_id: int, to_id: int, condition: str) -> None:
+        """
+        Add transition to the automat from one state to another
+        :param from_id: starting state id
+        :param to_id: finishing state id
+        :param condition: char or empty string (epsilon) for the transition
+        :return: None
+        """
         self.state_map[from_id] = self.state_map.get(from_id, {})
         self.state_map[to_id] = self.state_map.get(to_id, {})
         self.state_map[from_id][to_id] = self.state_map[from_id].get(to_id, transition_sieve.copy())
@@ -140,13 +190,13 @@ capture_groups: {self.capture_groups}
             return
         self.state_map[from_id][to_id][condition] = True
 
-    def delete_transition(self, from_id: int, to_id: int, condition: str) -> None:
-        if (from_id not in self.state_map) or (to_id not in self.state_map[from_id]) or \
-                (condition not in self.state_map[from_id][to_id]):
-            return
-        self.state_map[from_id][to_id][condition] = False
-        if True not in self.state_map[from_id][to_id].values():
-            del self.state_map[from_id][to_id]
+    # def delete_transition(self, from_id: int, to_id: int, condition: str) -> None:
+    #     if (from_id not in self.state_map) or (to_id not in self.state_map[from_id]) or \
+    #             (condition not in self.state_map[from_id][to_id]):
+    #         return
+    #     self.state_map[from_id][to_id][condition] = False
+    #     if True not in self.state_map[from_id][to_id].values():
+    #         del self.state_map[from_id][to_id]
 
     def _plus_operator(self) -> None:
         self.add_transition(self.end, self.start, "")
@@ -206,18 +256,29 @@ capture_groups: {self.capture_groups}
                 self.add_transition(starter_atm.end - (i - 1) * starter_atm.start,
                                     starter_atm.end - (operator.max_repetitions - 1) * starter_atm.start, "")
 
-    def repeat_automat(self, operator: Operator) -> Status:
+    def repeat_automat(self, operator: Operator) -> None:
+        """
+        Repeat automat with the operator (for e.g. {2, 3})
+        can be used for star, range and plus operators
+        :param operator: Operator used to perform the repeat
+        :return: None
+        """
         if operator.type is not Operator.Type.REPEAT:
-            return Status.WRONG_OPERATOR
+            logging.error("Wrong operator type trying to repeat automat")
+            raise ValueError("Wrong operator type trying to repeat automat")
         if operator.max_repetitions is not None:
             self._range_automat(operator)
         elif operator.min_repetitions == 0:
             self._star_operator()
         else:
             self._plus_operator()
-        return Status.OK
 
-    def cat_automat(self, atm: 'Automat') -> Status:
+    def cat_automat(self, atm: 'Automat') -> None:
+        """
+        Concatenate two automat objects (self and atm)
+        :param atm: Automat to concatenate with
+        :return:
+        """
         self._merge(atm)
         new_id = self.id + atm.id
         new_start = new_id
@@ -233,9 +294,13 @@ capture_groups: {self.capture_groups}
         self.id = new_id
         self.start = new_start
         self.end = new_end
-        return Status.OK
 
-    def alter_automat(self, atm: 'Automat') -> Status:
+    def alter_automat(self, atm: 'Automat') -> None:
+        """
+        Alter two automat objects (self and atm)
+        :param atm: Automat to alter with
+        :return: None
+        """
         self._merge(atm)
         new_id = self.id + atm.id
         new_start = new_id
@@ -251,17 +316,9 @@ capture_groups: {self.capture_groups}
         self.id = new_id
         self.start = new_start
         self.end = new_end
-        return Status.OK
 
     # def set_range_automat(self, operator: Operator):
     #     set_range = operator.set_range
     #     if set_range is None:
     #         return Status.WRONG_OPERATOR
 
-
-if __name__ == "__main__":
-    fill_transition_sieve()
-    aut = Automat(1, "a")
-    op = Operator("{2, 3}")
-    aut._repeat_automat(op)
-    x = 1

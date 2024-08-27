@@ -1,7 +1,6 @@
 import logging
 import queue
 
-from ..status import Status
 from ..automat import Automat, alphabet
 from typing import Set, Dict, List, FrozenSet, Tuple
 from queue import Queue
@@ -174,6 +173,11 @@ def _clear_capture_groups(dfa: Automat):
 
 
 def dfa_minimizer(dfa: Automat) -> Automat:
+    """
+    Minimize the DFA
+    :param dfa: Automat
+    :return: Minimized automat
+    """
     unbound_groups = _split_groups(dfa)
     unbound_groups = _analyse_group(dfa, unbound_groups)
     dfa = _recreate_dfa(dfa, unbound_groups)
